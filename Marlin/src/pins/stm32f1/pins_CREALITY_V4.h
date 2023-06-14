@@ -27,7 +27,7 @@
 
 #include "env_validate.h"
 
-#if HAS_MULTI_HOTEND || E_STEPPERS > 1
+#if !E_ERROR && (HAS_MULTI_HOTEND || E_STEPPERS > 1)
   #error "Creality v4 only supports 1 hotend / E stepper."
 #endif
 
@@ -35,7 +35,13 @@
   #define BOARD_INFO_NAME      "Creality V4"
 #endif
 #ifndef DEFAULT_MACHINE_NAME
-  #define DEFAULT_MACHINE_NAME "Ender 3 V2"
+#define DEFAULT_MACHINE_NAME "Ender-3 V2"
+#endif
+#ifndef CUSTOM_MACHINE_NAME
+#define CUSTOM_MACHINE_NAME DEFAULT_MACHINE_NAME
+#endif
+#ifndef BOOT_MACHINE_NAME
+#define BOOT_MACHINE_NAME DEFAULT_MACHINE_NAME
 #endif
 
 #define BOARD_NO_NATIVE_USB
@@ -53,6 +59,7 @@
 #if NO_EEPROM_SELECTED
   #define IIC_BL24CXX_EEPROM                      // EEPROM on I2C-0
   //#define SDCARD_EEPROM_EMULATION
+  #undef NO_EEPROM_SELECTED
 #endif
 
 #if ENABLED(IIC_BL24CXX_EEPROM)
@@ -148,8 +155,8 @@
 #ifndef HEATER_BED_PIN
   #define HEATER_BED_PIN                    PA2   // HOT BED
 #endif
-#ifndef FAN_PIN
-  #define FAN_PIN                           PA0   // FAN
+#ifndef FAN0_PIN
+  #define FAN0_PIN                          PA0   // FAN
 #endif
 #define FAN_SOFT_PWM_REQUIRED
 
@@ -158,7 +165,7 @@
 //
 #define SD_DETECT_PIN                       PC7
 #define SDCARD_CONNECTION ONBOARD
-#define SDIO_SUPPORT
+#define ONBOARD_SDIO
 #define NO_SD_HOST_DRIVE                          // This board's SD is only seen by the printer
 
 #if ANY(RET6_12864_LCD, HAS_DWIN_E3V2, IS_DWIN_MARLINUI)
@@ -182,7 +189,7 @@
   #define EXP3_07_PIN                       PB12
   #define EXP3_08_PIN                       PB15
 
-#elif EITHER(VET6_12864_LCD, DWIN_VET6_CREALITY_LCD)
+#elif ANY(VET6_12864_LCD, DWIN_VET6_CREALITY_LCD)
 
   /**
    *    VET6 12864 LCD
@@ -203,14 +210,14 @@
   #define EXP3_07_PIN                       PA4
   #define EXP3_08_PIN                       PA7
 
-#elif EITHER(CR10_STOCKDISPLAY, FYSETC_MINI_12864_2_1)
+#elif ANY(CR10_STOCKDISPLAY, FYSETC_MINI_12864_2_1)
   #error "Define RET6_12864_LCD or VET6_12864_LCD to select pins for the LCD with the Creality V4 controller."
 #endif
 
 #if ENABLED(CR10_STOCKDISPLAY)
 
   #define LCD_PINS_RS                EXP3_07_PIN
-  #define LCD_PINS_ENABLE            EXP3_08_PIN
+  #define LCD_PINS_EN                EXP3_08_PIN
   #define LCD_PINS_D4                EXP3_06_PIN
 
   #define BTN_ENC                    EXP3_02_PIN
@@ -300,9 +307,9 @@
 #define UART5_RX_PIN                        PD2   // default uses sdcard SDIO_CMD
 
 // SDIO pins
-#define SDIO_D0_PIN                         PC8
-#define SDIO_D1_PIN                         PC9
-#define SDIO_D2_PIN                         PC10
-#define SDIO_D3_PIN                         PC11
-#define SDIO_CK_PIN                         PC12
-#define SDIO_CMD_PIN                        PD2
+#define BOARD_SDIO_D0                       PC8
+#define BOARD_SDIO_D1                       PC9
+#define BOARD_SDIO_D2                       PC10
+#define BOARD_SDIO_D3                       PC11
+#define BOARD_SDIO_CK                       PC12
+#define BOARD_SDIO_CMD                      PD2

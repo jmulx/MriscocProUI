@@ -22,7 +22,7 @@
 
 #include "../../inc/MarlinConfig.h"
 
-#if ENABLED(SDSUPPORT)
+#if HAS_MEDIA
 
 #include "../gcode.h"
 #include "../../sd/cardreader.h"
@@ -41,8 +41,13 @@
   #include "../../feature/powerloss.h"
 #endif
 
-#if ENABLED(DGUS_LCD_UI_MKS)
+#if DGUS_LCD_UI_MKS
   #include "../../lcd/extui/dgus/DGUSDisplayDef.h"
+#endif
+
+#if ALL(DWIN_LCD_PROUI, CV_LASER_MODULE)
+  #include "../../lcd/e3v2/proui/dwin.h"
+  #include "../../feature/spindle_laser.h"
 #endif
 
 #include "../../MarlinCore.h" // for startOrResumeJob
@@ -52,7 +57,7 @@
  */
 void GcodeSuite::M24() {
 
-  #if ENABLED(DGUS_LCD_UI_MKS)
+  #if DGUS_LCD_UI_MKS
     if ((print_job_timer.isPaused() || print_job_timer.isRunning()) && !parser.seen("ST"))
       MKS_resume_print_move();
   #endif
@@ -66,6 +71,15 @@ void GcodeSuite::M24() {
     if (did_pause_print) {
       resume_print(); // will call print_job_timer.start()
       return;
+    }
+  #endif
+
+  #if ENABLED(CV_LASER_MODULE)
+    if(laser_device.is_laser_device()) // 107011-20210925 激光模式。
+    {
+      cutter.apply_power(laser_device.save_power); // 恢复激光功率
+      //暂停后恢复时先跑到之前的位置。专业固件是最好的 
+      //if(print_job_timer.isPaused()) do_blocking_move_to_xy(laser_device.pause_before_position_x, laser_device.pause_before_position_y, homing_feedrate(X_AXIS));//107011- 20211105 暂停逻辑改为了，停在最后执行位置， 因此屏蔽掉此行
     }
   #endif
 
@@ -96,20 +110,43 @@ void GcodeSuite::M25() {
 
   #if ENABLED(PARK_HEAD_ON_PAUSE)
 
+    //107011 -20210926
+    #if ENABLED(CV_LASER_MODULE)
+      if(laser_device.is_laser_device()) {
+        if (print_job_timer.isPaused()) return;
+        laser_device.save_power = cutter.power;
+        cutter.apply_power(0);
+        card.pauseSDPrint();
+        print_job_timer.pause();
+        #if ENABLED(HOST_ACTION_COMMANDS)
+          TERN_(HOST_PROMPT_SUPPORT, hostui.prompt_open(PROMPT_PAUSE_RESUME, F("Pause SD"), F("Resume")));
+          #ifdef ACTION_ON_PAUSE
+            hostui.pause();
+          #endif
+        #endif
+      }
+      else
+    #endif
     if (printingIsActive()) M125();  // ProUI Do only if printing
 
   #else
 
     // Set initial pause flag to prevent more commands from landing in the queue while we try to pause
-    #if ENABLED(SDSUPPORT)
-      if (IS_SD_PRINTING()) card.pauseSDPrint();
-    #endif
+    if (IS_SD_PRINTING()) card.pauseSDPrint();
 
     #if ENABLED(POWER_LOSS_RECOVERY) && DISABLED(DGUS_LCD_UI_MKS)
       if (recovery.enabled) recovery.save(true);
     #endif
 
     print_job_timer.pause();
+
+    //107011 -20210926
+    #if ENABLED(CV_LASER_MODULE)
+      if(laser_device.is_laser_device()) {
+        laser_device.save_power = cutter.power;
+        cutter.apply_power(0);
+      }
+    #endif
 
     TERN_(DGUS_LCD_UI_MKS, MKS_pause_print_move());
 
@@ -125,4 +162,4 @@ void GcodeSuite::M25() {
   #endif
 }
 
-#endif // SDSUPPORT
+#endif // HAS_MEDIA

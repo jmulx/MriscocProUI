@@ -40,8 +40,8 @@ bool need_lcd_update = true;
 // Send the data in the buffer plus the packet tail
 void DWIN_Send(size_t &i) {
   ++i;
-  LOOP_L_N(n, i) { LCD_SERIAL.write(DWIN_SendBuf[n]); delayMicroseconds(1); }
-  LOOP_L_N(n, 4) { LCD_SERIAL.write(DWIN_BufTail[n]); delayMicroseconds(1); }
+  for (uint8_t n = 0; n < i; ++n) { LCD_SERIAL.write(DWIN_SendBuf[n]); delayMicroseconds(1); }
+  for (uint8_t n = 0; n < 4; ++n) { LCD_SERIAL.write(DWIN_BufTail[n]); delayMicroseconds(1); }
   need_lcd_update = true;
 }
 
@@ -126,21 +126,23 @@ void DWIN_Frame_Clear(const uint16_t color) {
   DWIN_Send(i);
 }
 
-// Draw a point
-//  color: point color
-//  width: point width   0x01-0x0F
-//  height: point height 0x01-0x0F
-//  x,y: upper left point
-void DWIN_Draw_Point(uint16_t color, uint8_t width, uint8_t height, uint16_t x, uint16_t y) {
-  size_t i = 0;
-  DWIN_Byte(i, 0x02);
-  DWIN_Word(i, color);
-  DWIN_Byte(i, width);
-  DWIN_Byte(i, height);
-  DWIN_Word(i, x);
-  DWIN_Word(i, y);
-  DWIN_Send(i);
-}
+#if DISABLED(TJC_DISPLAY)
+  // Draw a point
+  //  color: point color
+  //  width: point width   0x01-0x0F
+  //  height: point height 0x01-0x0F
+  //  x,y: upper left point
+  void DWIN_Draw_Point(uint16_t color, uint8_t width, uint8_t height, uint16_t x, uint16_t y) {
+    size_t i = 0;
+    DWIN_Byte(i, 0x02);
+    DWIN_Word(i, color);
+    DWIN_Byte(i, width);
+    DWIN_Byte(i, height);
+    DWIN_Word(i, x);
+    DWIN_Word(i, y);
+    DWIN_Send(i);
+  }
+#endif
 
 // Draw a line
 //  color: Line segment color
@@ -275,7 +277,7 @@ void DWIN_ICON_Show(bool IBD, bool BIR, bool BFI, uint8_t libID, uint8_t picID, 
 //  addr: SRAM address
 void DWIN_ICON_Show(bool IBD, bool BIR, bool BFI, uint16_t x, uint16_t y, uint16_t addr) {
   NOMORE(x, DWIN_WIDTH - 1);
-  NOMORE(y, DWIN_HEIGHT - 1); // -- ozy -- srl
+  NOMORE(y, DWIN_HEIGHT - 1);
   size_t i = 0;
   DWIN_Byte(i, 0x24);
   DWIN_Word(i, x);

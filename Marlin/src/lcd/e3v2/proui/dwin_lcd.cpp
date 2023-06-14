@@ -1,8 +1,8 @@
 /**
  * DWIN Enhanced implementation for PRO UI
  * Author: Miguel A. Risco-Castillo (MRISCOC)
- * Version: 3.11.1
- * Date: 2022/08/8
+ * Version: 3.12.1
+ * Date: 2023/01/22
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -110,12 +110,33 @@ void DWIN_WriteToMem(uint8_t mem, uint16_t addr, uint16_t length, uint8_t *data)
     DWIN_Byte(i, mem);
     DWIN_Word(i, addr + indx); // start address of the data block
     ++i;
-    LOOP_L_N(j, i) { LCD_SERIAL.write(DWIN_SendBuf[j]); delayMicroseconds(1); }  // Buf header
+    for (uint8_t j = 0; j < i; ++j) { LCD_SERIAL.write(DWIN_SendBuf[j]); delayMicroseconds(1); }  // Buf header
     for (uint16_t j = indx; j <= indx + to_send - 1; j++) LCD_SERIAL.write(*(data + j)); delayMicroseconds(1);  // write block of data
-    LOOP_L_N(j, 4) { LCD_SERIAL.write(DWIN_BufTail[j]); delayMicroseconds(1); }
+    for (uint8_t j = 0; j < 4; ++j) { LCD_SERIAL.write(DWIN_BufTail[j]); delayMicroseconds(1); }
     block++;
     pending -= to_send;
   }
+}
+
+// Draw an Icon from SRAM without background transparency for DACAI Screens support
+void DACAI_ICON_Show(uint16_t x, uint16_t y, uint16_t addr) {
+  NOMORE(x, DWIN_WIDTH - 1);
+  NOMORE(y, DWIN_HEIGHT - 1);
+  size_t i = 0;
+  DWIN_Byte(i, 0x70);
+  DWIN_Word(i, x);
+  DWIN_Word(i, y);
+  DWIN_Word(i, addr);
+  DWIN_Send(i);
+}
+
+void DWIN_ICON_Show(uint16_t x, uint16_t y, uint16_t addr) {
+  #if ENABLED(DACAI_DISPLAY) || DISABLED(DWIN_DISPLAY)
+    DACAI_ICON_Show(x, y, addr);
+  #endif
+  #if ENABLED(DWIN_DISPLAY) || DISABLED(DACAI_DISPLAY)
+    DWIN_ICON_Show(0, 0, 1, x, y, addr);
+  #endif
 }
 
 // Write the contents of the 32KB SRAM data memory into the designated image memory space.

@@ -1,8 +1,8 @@
 /**
  * ToolBar for PRO UI
  * Author: Miguel A. Risco-Castillo (MRISCOC)
- * version: 1.3.1
- * Date: 2022/08/05
+ * version: 1.4.1
+ * Date: 2023/05/18
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -23,14 +23,14 @@
 
 #include "../../../inc/MarlinConfigPre.h"
 
-#include "dwinui.h"
+#include "dwin.h"
 #include "menus.h"
 
-#define TBHeight 28
-#define TBOffset 20
-#define TBYPos (STATUS_Y - (TBHeight + 5))
-#define B_YPos (TBYPos + 5)
-#define B_XPos 24
+#define TBHEIGHT 28
+#define TBYOFFSET 20
+#define TBYPOS (STATUS_Y - (TBHEIGHT + 5))
+#define B_YPOS (TBYPOS + 5)
+#define B_XPOS 24
 #define TBMaxCaptionWidth 18
 
 typedef struct {
@@ -38,8 +38,8 @@ typedef struct {
   FSTR_P caption = nullptr;
   void (*onClick)() = nullptr;
 } TBItem_t;
-extern TBItem_t TBItem;
-extern TBItem_t TBItemA[];
+extern const TBItem_t *TBItem;
+extern const TBItem_t TBItemA[];
 
 class ToolBarClass : public MenuClass {
 public:
